@@ -9,6 +9,14 @@ on the contents of the transmission, then cowboy_revproxy will helps
 you. It's heavily inspidered from [proxymachine](https://github.com/mojombo/proxymachine).
 
 
+## Build
+
+You need [rebar](http://github.com/basho/rebar) to build
+cowboy_revproxy:
+
+    $ rebar get-deps
+    $ rebar compile 
+
 ## Usage
 
 The idea is simple, once a request is coming to the proxy the data is
