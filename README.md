@@ -26,8 +26,8 @@ connection or tell to the proxy to close the connection.
 **Valid returns values** are :
 
 * `stop` -> close the connection
-* `{stop, Reply} -> send Reply to the client and close the connection
-* `{remote, Remote} -> return the address of the remote connection to
+* `{stop, Reply}` -> send Reply to the client and close the connection
+* `{remote, Remote}` -> return the address of the remote connection to
   proxy. Remote can be one of the following:
     - `{ip, port}`
     - `{ssl, Ip, Port, Options}`, where options are ssl options
