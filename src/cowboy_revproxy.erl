@@ -72,8 +72,6 @@ wait_request(State=#state{socket=Socket, transport=Transport, timeout=T,
 start_proxy_loop(State=#state{remote=Remote, buffer=Buffer}) ->
     case remote_connect(Remote) of
         {Transport, {ok, Socket}} ->
-            io:format("transport ~p, socket: ~p~n", [Transport,
-                    Socket]),
             Transport:send(Socket, Buffer),
             proxy_loop(State#state{remote_socket=Socket,
                     remote_transport=Transport, buffer= <<>> });
@@ -121,12 +119,10 @@ remote_connect({ssl, Ip, Port, Opts}) ->
     {cowboy_ssl_transport, ssl:connect(Ip, Port, [binary, {packet, 0},
                 {delay_send, true} | Opts1])}.
 
-
 remote_terminate(#state{remote_socket=Socket,
         remote_transport=Transport}) ->
     Transport:close(Socket),
     ok.
-
 
 terminate_all(State) ->
     remote_terminate(State),
