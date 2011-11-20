@@ -109,8 +109,8 @@ call_handler({M, F, A}, Data) ->
 
 -spec terminate(#state{}) -> ok.
 terminate(#state{socket=Socket, transport=Transport}) ->
-	Transport:close(Socket),
-	ok.
+    Transport:close(Socket),
+    ok.
 
 
 remote_connect({Ip, Port}) ->
