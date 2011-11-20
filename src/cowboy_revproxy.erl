@@ -30,7 +30,7 @@
 -spec start_link(pid(), inet:socket(), module(), any()) -> {ok, pid()}.
 start_link(ListenerPid, Socket, Transport, Opts) ->
     Pid = spawn_link(?MODULE, init, [ListenerPid, Socket, Transport, Opts]),
-	{ok, Pid}.
+    {ok, Pid}.
 
 %% @private
 -spec init(pid(), inet:socket(), module(), any()) -> ok | none().
