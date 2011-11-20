@@ -15,7 +15,7 @@ The idea is simple, once a request is coming to the proxy the data is
 passed to a proxy function until this function return a remote
 connection or tell to the proxy to close the connection. 
 
-Valid returns values are :
+**Valid returns values** are :
 
 * `stop` -> close the connection
 * `{stop, Reply} -> send Reply to the client and close the connection
