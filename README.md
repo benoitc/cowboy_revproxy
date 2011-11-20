@@ -1,6 +1,6 @@
 # cowboy_revproxy
 
-cowboy_revprox is a simple TCP routing proxy (layer 7) in erlang and
+cowboy_revproxy is a simple TCP routing proxy (layer 7) in erlang and
 using Cowboy connection handling. It lets you configure the routine
 logic in Erlang. 
 
