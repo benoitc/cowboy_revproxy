@@ -30,6 +30,8 @@ connection or tell to the proxy to close the connection.
 * `[{remote, Remote}, {data, Data}, {reply, Reply}]` -> same as above
   but reply `Reply` to the client.
 
+## Example
+
 Here is a simple example of function proxying the port 8080 to google.com:
 
     -module(cowboy_revproxy_example).
