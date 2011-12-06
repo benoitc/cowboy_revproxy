@@ -27,6 +27,8 @@ connection or tell to the proxy to close the connection.
 
 * `stop` -> close the connection
 * `{stop, Reply}` -> send Reply to the client and close the connection
+* `{http, Dispatch}` -> Use the HTTP protocol of cowboy with the
+  dispatch rules list Dispatch.
 * `{remote, Remote}` -> return the address of the remote connection to
   proxy. Remote can be one of the following:
     - `{ip, port}`
@@ -54,6 +56,35 @@ Here is a simple example of function proxying the port 8080 to google.com:
             cowboy:start_listener(http, 100,
             cowboy_tcp_transport, [{port, 8080}],
             cowboy_revproxy, [{proxy, {?MODULE, proxy}}]).
+
+
+This simple proxy function allows you to handle an HTTP request locally
+
+
+    proxy(Data) ->
+        Dispatch = [
+            %% {Host, list({Path, Handler, Opts})}
+            {'_', [{'_', my_handler, []}]}
+        ],
+        {http, Dispatch}.
+
+
+A simple "Hello World" HTTP handler:
+
+    -module(my_handler).
+    -behaviour(cowboy_http_handler).
+    -export([init/3, handle/2, terminate/2]).
+
+    init({tcp, http}, Req, Opts) ->
+        {ok, Req, undefined_state}.
+
+    handle(Req, State) ->
+        {ok, Req2} = cowboy_http_req:reply(200, [], <<"Hello World!">>, Req),
+        {ok, Req2, State}.
+
+    terminate(Req, State) ->
+        ok.
+
 
 
 To test it do, in the source folder:

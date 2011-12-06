@@ -14,7 +14,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
--record(state, {
+%% proxy state
+-record(stproxy, {
         listener :: pid(),
         socket :: inet:socket(),
         transport :: module(),
@@ -25,6 +26,23 @@
         remote_socket :: inet:socket(),
         remote_transport :: module()
     }).
+
+%% HTTP protocol state
+-record(state, {
+	listener :: pid(),
+	socket :: inet:socket(),
+	transport :: module(),
+	dispatch :: cowboy_dispatcher:dispatch_rules(),
+	handler :: {module(), any()},
+	req_empty_lines = 0 :: integer(),
+	max_empty_lines = 5:: integer(),
+	max_line_length = 4096:: integer(),
+	timeout = 5000 :: timeout(),
+	buffer = <<>> :: binary(),
+	hibernate = false :: boolean(),
+	loop_timeout = infinity :: timeout(),
+	loop_timeout_ref :: undefined | reference()
+}).
 
 %% @doc Start a revproxy process
 -spec start_link(pid(), inet:socket(), module(), any()) -> {ok, pid()}.
@@ -38,11 +56,11 @@ init(ListenerPid, Socket, Transport, Opts) ->
     Handler = proplists:get_value(proxy, Opts),
     Timeout = proplists:get_value(timeout, Opts, 5000),
     receive shoot -> ok end,
-    wait_request(#state{listener=ListenerPid, socket=Socket,
+    wait_request(#stproxy{listener=ListenerPid, socket=Socket,
             transport=Transport, handler=Handler, timeout=Timeout}).
 
--spec wait_request(#state{}) -> ok | none().
-wait_request(State=#state{socket=Socket, transport=Transport, timeout=T,
+-spec wait_request(#stproxy{}) -> ok | none().
+wait_request(State=#stproxy{socket=Socket, transport=Transport, timeout=T,
         handler=Handler, buffer=Buffer}) ->
 
     case Transport:recv(Socket, 0, T) of
@@ -54,32 +72,37 @@ wait_request(State=#state{socket=Socket, transport=Transport, timeout=T,
                 {stop, Reply} ->
                 Transport:send(Socket, Reply),
                     terminate(State);
+                {http, Dispatch} ->
+                    #stproxy{listener=Listener} = State,
+                    cowboy_http_protocol:parse_request(#state{listener=Listener,
+                            socket=Socket, transport=Transport,
+                            dispatch=Dispatch, buffer = Buffer1});
                 {remote, Remote} ->
-                    start_proxy_loop(State#state{buffer=Buffer1, remote=Remote});
+                    start_proxy_loop(State#stproxy{buffer=Buffer1, remote=Remote});
                 [{remote, Remote}, {data, Data}] ->
-                    start_proxy_loop(State#state{buffer=Data, remote=Remote});
+                    start_proxy_loop(State#stproxy{buffer=Data, remote=Remote});
                 [{remote, Remote}, {data, Data}, {reply, Reply}] ->
                     Transport:send(Socket, Reply),
-                    start_proxy_loop(State#state{buffer=Data, remote=Remote});
+                    start_proxy_loop(State#stproxy{buffer=Data, remote=Remote});
                 _ ->
-                    wait_request(State#state{buffer=Buffer1})
+                    wait_request(State#stproxy{buffer=Buffer1})
             end;
         {error, _Reason} ->
             terminate(State)
     end.
 
 
-start_proxy_loop(State=#state{remote=Remote, buffer=Buffer}) ->
+start_proxy_loop(State=#stproxy{remote=Remote, buffer=Buffer}) ->
     case remote_connect(Remote) of
         {Transport, {ok, Socket}} ->
             Transport:send(Socket, Buffer),
-            proxy_loop(State#state{remote_socket=Socket,
+            proxy_loop(State#stproxy{remote_socket=Socket,
                     remote_transport=Transport, buffer= <<>> });
         {error, _Error} ->
             terminate(State)
     end.
 
-proxy_loop(State=#state{socket=From, transport=TFrom,
+proxy_loop(State=#stproxy{socket=From, transport=TFrom,
         remote_socket=To, remote_transport=TTo}) ->
     TFrom:setopts(From, [{packet, 0}, {active, once}]),
     TTo:setopts(To, [{packet, 0}, {active, once}]),
@@ -105,8 +128,8 @@ call_handler({M, F}, Data) ->
 call_handler({M, F, A}, Data) ->
     erlang:apply(M, F, [Data | A]).
 
--spec terminate(#state{}) -> ok.
-terminate(#state{socket=Socket, transport=Transport}) ->
+-spec terminate(#stproxy{}) -> ok.
+terminate(#stproxy{socket=Socket, transport=Transport}) ->
     Transport:close(Socket),
     ok.
 
@@ -119,7 +142,7 @@ remote_connect({ssl, Ip, Port, Opts}) ->
     {cowboy_ssl_transport, ssl:connect(Ip, Port, [binary, {packet, 0},
                 {delay_send, true} | Opts1])}.
 
-remote_terminate(#state{remote_socket=Socket,
+remote_terminate(#stproxy{remote_socket=Socket,
         remote_transport=Transport}) ->
     Transport:close(Socket),
     ok.
