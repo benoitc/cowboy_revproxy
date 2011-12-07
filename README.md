@@ -25,6 +25,7 @@ connection or tell to the proxy to close the connection.
 
 **Valid returns values** are :
 
+* `continue` or `ok` -> wait for next chunk
 * `stop` -> close the connection
 * `{stop, Reply}` -> send Reply to the client and close the connection
 * `{http, Dispatch}` -> Use the HTTP protocol of cowboy with the
