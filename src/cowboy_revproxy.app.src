@@ -1,15 +1,15 @@
 %M% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*-
 %%% ex: ft=erlang ts=4 sw=4 et
 %%%
-%%% This file is part of cowboy_revproxy released under the MIT license. 
+%%% This file is part of cowboy_revproxy released under the MIT license.
 %%% See the NOTICE for more information.
 
 
 {application, cowboy_revproxy,
  [{description, "Cownboy reverse proxy handler"},
-  {vsn, "0.2.0"},
+  {vsn, "0.3.0"},
   {modules, []},
-  {registered, []},  
+  {registered, []},
   {applications, [kernel, stdlib]}
 ]}.
 
