@@ -7,6 +7,7 @@ proxy(_Data) ->
 start() ->
     application:start(cowboy),
     application:start(cowboy_revproxy),
-        cowboy:start_listener(http, 100,
-        cowboy_tcp_transport, [{port, 8080}],
-        cowboy_revproxy, [{proxy, {?MODULE, proxy}}]).
+
+    cowboy:start_listener(http, 100,
+                          cowboy_tcp_transport, [{port, 8080}],
+                          cowboy_revproxy, [{proxy, {?MODULE, proxy}}]).

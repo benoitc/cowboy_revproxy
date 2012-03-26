@@ -1,7 +1,7 @@
 %M% -*- tab-width: 4;erlang-indent-level: 4;indent-tabs-mode: nil -*-
 %%% ex: ft=erlang ts=4 sw=4 et
 %%%
-%%% This file is part of cowboy_revproxy released under the MIT license. 
+%%% This file is part of cowboy_revproxy released under the MIT license.
 %%% See the NOTICE for more information.
 
 
@@ -13,6 +13,7 @@
 -export([init/4]).
 
 -include_lib("eunit/include/eunit.hrl").
+-include_lib("cowboy/include/http.hrl").
 
 %% proxy state
 -record(stproxy, {
@@ -34,10 +35,14 @@
 	transport :: module(),
 	dispatch :: cowboy_dispatcher:dispatch_rules(),
 	handler :: {module(), any()},
+	onrequest :: undefined | fun((#http_req{}) -> #http_req{}),
+	urldecode :: {fun((binary(), T) -> binary()), T},
 	req_empty_lines = 0 :: integer(),
-	max_empty_lines = 5:: integer(),
-	max_line_length = 4096:: integer(),
-	timeout = 5000 :: timeout(),
+	max_empty_lines :: integer(),
+	req_keepalive = 1 :: integer(),
+	max_keepalive :: integer(),
+	max_line_length :: integer(),
+	timeout :: timeout(),
 	buffer = <<>> :: binary(),
 	hibernate = false :: boolean(),
 	loop_timeout = infinity :: timeout(),
@@ -55,7 +60,7 @@ start_link(ListenerPid, Socket, Transport, Opts) ->
 init(ListenerPid, Socket, Transport, Opts) ->
     Handler = proplists:get_value(proxy, Opts),
     Timeout = proplists:get_value(timeout, Opts, 5000),
-    receive shoot -> ok end,
+    ok = cowboy:accept_ack(ListenerPid),
     wait_request(#stproxy{listener=ListenerPid, socket=Socket,
             transport=Transport, handler=Handler, timeout=Timeout}).
 
@@ -135,7 +140,7 @@ terminate(#stproxy{socket=Socket, transport=Transport}) ->
 
 
 remote_connect({Ip, Port}) ->
-    {cowboy_tcp_transport, gen_tcp:connect(Ip, Port, [binary, 
+    {cowboy_tcp_transport, gen_tcp:connect(Ip, Port, [binary,
                 {packet, 0}, {delay_send, true}])};
 remote_connect({ssl, Ip, Port, Opts}) ->
     Opts1 = parse_ssl_options(Opts),

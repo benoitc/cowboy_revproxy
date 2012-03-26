@@ -58,6 +58,17 @@ Here is a simple example of function proxying the port 8080 to google.com:
             cowboy_tcp_transport, [{port, 8080}],
             cowboy_revproxy, [{proxy, {?MODULE, proxy}}]).
 
+To test it do, in the source folder:
+
+    $ rebar get-deps compile
+    $ erl -pa ebin -pa deps/cowboy/ebin
+      
+Then in the erlang shell:
+
+    1> cowboy_revproxy_example:start().
+
+and go on http://127.0.0.1:8080/ , it should display the google page.
+
 
 This simple proxy function allows you to handle an HTTP request locally
 
@@ -85,16 +96,3 @@ A simple "Hello World" HTTP handler:
 
     terminate(Req, State) ->
         ok.
-
-
-
-To test it do, in the source folder:
-
-    $ rebar get-deps compile
-    $ erl -pa ebin -pa deps/cowboy/ebin
-      
-Then in the erlang shell:
-
-    1> cowboy_revproxy_example:start().
-
-and go on http://127.0.0.1:8080/ , it should display the google page.
