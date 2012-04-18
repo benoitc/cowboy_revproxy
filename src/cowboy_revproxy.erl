@@ -28,25 +28,24 @@
         remote_transport :: module()
     }).
 
-%% HTTP protocol state
 -record(state, {
-	listener :: pid(),
-	socket :: inet:socket(),
-	transport :: module(),
-	dispatch :: cowboy_dispatcher:dispatch_rules(),
-	handler :: {module(), any()},
-	onrequest :: undefined | fun((#http_req{}) -> #http_req{}),
-	urldecode :: {fun((binary(), T) -> binary()), T},
-	req_empty_lines = 0 :: integer(),
-	max_empty_lines :: integer(),
-	req_keepalive = 1 :: integer(),
-	max_keepalive :: integer(),
-	max_line_length :: integer(),
-	timeout :: timeout(),
-	buffer = <<>> :: binary(),
-	hibernate = false :: boolean(),
-	loop_timeout = infinity :: timeout(),
-	loop_timeout_ref :: undefined | reference()
+    listener :: pid(),
+    socket :: inet:socket(),
+    transport :: module(),
+    dispatch :: cowboy_dispatcher:dispatch_rules(),
+    handler :: {module(), any()},
+    onrequest :: undefined | fun((#http_req{}) -> #http_req{}),
+    urldecode :: {fun((binary(), T) -> binary()), T},
+    req_empty_lines = 0 :: integer(),
+    max_empty_lines :: integer(),
+    req_keepalive = 1 :: integer(),
+    max_keepalive :: integer(),
+    max_line_length :: integer(),
+    timeout :: timeout(),
+    buffer = <<>> :: binary(),
+    hibernate = false :: boolean(),
+    loop_timeout = infinity :: timeout(),
+    loop_timeout_ref :: undefined | reference()
 }).
 
 %% @doc Start a revproxy process
@@ -78,10 +77,12 @@ wait_request(State=#stproxy{socket=Socket, transport=Transport, timeout=T,
                 Transport:send(Socket, Reply),
                     terminate(State);
                 {http, Dispatch} ->
-                    #stproxy{listener=Listener} = State,
+                    #stproxy{listener=Listener, timeout=T} = State,
+                    URLDec = {fun cowboy_http:urldecode/2, crash},
                     cowboy_http_protocol:parse_request(#state{listener=Listener,
                             socket=Socket, transport=Transport,
-                            dispatch=Dispatch, buffer = Buffer1});
+                            dispatch=Dispatch, buffer = Buffer1,
+                            urldecode=URLDec, timeout=T});
                 {remote, Remote} ->
                     start_proxy_loop(State#stproxy{buffer=Buffer1, remote=Remote});
                 [{remote, Remote}, {data, Data}] ->
