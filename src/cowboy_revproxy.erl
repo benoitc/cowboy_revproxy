@@ -85,11 +85,11 @@ wait_request(State=#stproxy{socket=Socket, transport=Transport, timeout=T,
                             urldecode=URLDec, timeout=T});
                 {remote, Remote} ->
                     start_proxy_loop(State#stproxy{buffer=Buffer1, remote=Remote});
-                [{remote, Remote}, {data, Data}] ->
-                    start_proxy_loop(State#stproxy{buffer=Data, remote=Remote});
-                [{remote, Remote}, {data, Data}, {reply, Reply}] ->
+                [{remote, Remote}, {data, NewData}] ->
+                    start_proxy_loop(State#stproxy{buffer=NewData, remote=Remote});
+                [{remote, Remote}, {data, NewData}, {reply, Reply}] ->
                     Transport:send(Socket, Reply),
-                    start_proxy_loop(State#stproxy{buffer=Data, remote=Remote});
+                    start_proxy_loop(State#stproxy{buffer=NewData, remote=Remote});
                 _ ->
                     wait_request(State#stproxy{buffer=Buffer1})
             end;
