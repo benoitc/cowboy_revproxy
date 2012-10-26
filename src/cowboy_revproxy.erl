@@ -35,6 +35,8 @@
     dispatch :: cowboy_dispatcher:dispatch_rules(),
     handler :: {module(), any()},
     onrequest :: undefined | fun((#http_req{}) -> #http_req{}),
+    onresponse = undefined :: undefined | fun((cowboy_http:status(),
+        cowboy_http:headers(), #http_req{}) -> #http_req{}),
     urldecode :: {fun((binary(), T) -> binary()), T},
     req_empty_lines = 0 :: integer(),
     max_empty_lines :: integer(),
